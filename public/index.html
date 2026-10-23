@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام استكشاف الوظائف والتقديم اليدوي الذكي | AI Job Discovery & Application Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=6.0">
+</head>
+<body>
+  <!-- الشريط العلوي -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-icon">💼</div>
+        <div>
+          <h1 class="brand-title">مساعد استكشاف الوظائف والتقديم اليدوي الذكي</h1>
+          <div class="system-status">
+            <span class="status-dot"></span>
+            <span id="systemStatusText">النظام متصل ويقوم بالتحليل والتخصيص</span>
+            <span class="status-interval" id="intervalBadge">تقديم يدوي 100% بدون أي تقديم آلي</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <button id="btnFetchJobsTop" class="btn btn-primary" onclick="triggerFetchJobsNow()">
+          <span class="btn-icon" id="fetchIcon">🔄</span>
+          <span>جلب الوظائف من المصادر المفعلة</span>
+        </button>
+        <button id="btnRefreshMailTop" class="btn btn-secondary btn-sm" onclick="triggerManualCheck()" title="فحص رسائل Gmail">
+          <span>📬 فحص البريد</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- جسم الصفحة الرئيسي -->
+  <main class="main-container">
+    <!-- التبويبات الرئيسية -->
+    <div class="tabs-container">
+      <button class="tab-btn active" onclick="switchTab('jobs')" id="tabJobsBtn">
+        <span>💼</span> وظائف مطابقة لسيرتي الذاتية
+      </button>
+      <button class="tab-btn" onclick="switchTab('sources')" id="tabSourcesBtn">
+        <span>🌐</span> مصادر الوظائف
+      </button>
+      <button class="tab-btn" onclick="switchTab('applied')" id="tabAppliedBtn">
+        <span>📤</span> سجل التقديم اليدوي
+      </button>
+      <button class="tab-btn" onclick="switchTab('profile')" id="tabProfileBtn">
+        <span>👤</span> الملف المهني والـ CV
+      </button>
+      <button class="tab-btn" onclick="switchTab('inbox')" id="tabInboxBtn">
+        <span>📥</span> رسائل Gmail والردود
+      </button>
+      <button class="tab-btn" onclick="switchTab('history')" id="tabHistoryBtn">
+        <span>📅</span> السجل الزمني
+      </button>
+      <button class="tab-btn" onclick="switchTab('logs')" id="tabLogsBtn">
+        <span>📋</span> سجلات النظام
+      </button>
+    </div>
+
+    <!-- بطاقات الإحصائيات الشاملة للوظائف والتقديم اليدوي -->
+    <section class="stats-grid job-stats-bar">
+      <div class="stat-card stat-new">
+        <div class="stat-header">
+          <span class="stat-title">وظائف جديدة</span>
+          <span class="stat-icon">✨</span>
+        </div>
+        <div class="stat-value" id="statNewJobs">0</div>
+        <div class="stat-sub">من المصادر المفعلة</div>
+      </div>
+
+      <div class="stat-card stat-matching">
+        <div class="stat-header">
+          <span class="stat-title">وظائف متطابقة</span>
+          <span class="stat-icon">🎯</span>
+        </div>
+        <div class="stat-value" id="statMatchingJobs">0</div>
+        <div class="stat-sub">توافق 60% فما فوق</div>
+      </div>
+
+      <div class="stat-card stat-high-match">
+        <div class="stat-header">
+          <span class="stat-title">توافق فائق (80%+)</span>
+          <span class="stat-icon">🚀</span>
+        </div>
+        <div class="stat-value" id="statHighMatchJobs">0</div>
+        <div class="stat-sub">أعلى مطابقة لخبراتك</div>
+      </div>
+
+      <div class="stat-card stat-cvs">
+        <div class="stat-header">
+          <span class="stat-title">سير ذاتية مجهزة</span>
+          <span class="stat-icon">📄</span>
+        </div>
+        <div class="stat-value" id="statCvsPrepared">0</div>
+        <div class="stat-sub">نسخ ATS مخصصة</div>
+      </div>
+
+      <div class="stat-card stat-cl">
+        <div class="stat-header">
+          <span class="stat-title">خطابات تقديم جاهزة</span>
+          <span class="stat-icon">✉️</span>
+        </div>
+        <div class="stat-value" id="statCoverLetters">0</div>
+        <div class="stat-sub">عربي + إنجليزي</div>
+      </div>
+
+      <div class="stat-card stat-ready">
+        <div class="stat-header">
+          <span class="stat-title">جاهزة للتقديم</span>
+          <span class="stat-icon">⚡</span>
+        </div>
+        <div class="stat-value" id="statReadyToApply">0</div>
+        <div class="stat-sub">المستندات جاهزة للتقديم</div>
+      </div>
+
+      <div class="stat-card stat-applied">
+        <div class="stat-header">
+          <span class="stat-title">تم التقديم يدوياً</span>
+          <span class="stat-icon">✅</span>
+        </div>
+        <div class="stat-value" id="statManuallyApplied">0</div>
+        <div class="stat-sub">موثقة يدوياً بواسطتك</div>
+      </div>
+
+      <div class="stat-card stat-expired">
+        <div class="stat-header">
+          <span class="stat-title">وظائف منتهية</span>
+          <span class="stat-icon">⌛</span>
+        </div>
+        <div class="stat-value" id="statExpiredJobs">0</div>
+        <div class="stat-sub">انتهى موعدها</div>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- تبويب 1: استكشاف الوظائف المطابقة لسيرتي الذاتية (Jobs Matching My CV) -->
+    <!-- ======================================================== -->
+    <section id="jobsView" class="view-section active">
+      <div class="jobs-header-banner">
+        <div class="jobs-header-info">
+          <h2>💼 وظائف مطابقة لملفي المهني وسيرتي الذاتية</h2>
+          <p>استعراض وتحليل الوظائف المجلوبة من المصادر الرسمية المعتمدة، مع فحص التوافق بدون أي فبركة للمعلومات، وتجهيز السير الذاتية وخطابات التقديم المخصصة للتقديم اليدوي.</p>
+        </div>
+        <div class="jobs-header-actions">
+          <button class="btn btn-success" onclick="triggerMatchAllJobs()" id="btnMatchAllJobs">
+            <span class="btn-icon">🎯</span>
+            <span>مطابقة وتقييم الوظائف الجديدة بالذكاء الاصطناعي</span>
+          </button>
+          <button class="btn btn-primary" onclick="loadJobsList()">
+            <span class="btn-icon">🔄</span>
+            <span>تحديث القائمة</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- شريط البحث والفلاتر والترتيب المتقدم -->
+      <div class="filters-bar jobs-filter-bar">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="jobSearchInput" placeholder="ابحث في المسمى، الشركة، الموقع، التقنيات المطلوبة..." oninput="handleJobSearch()">
+        </div>
+
+        <div class="filters-group">
+          <!-- فلتر الحالة -->
+          <select id="jobStatusFilter" class="filter-select" onchange="loadJobsList()">
+            <option value="all">كل الحالات النشطة</option>
+            <option value="NEW">✨ وظائف جديدة (NEW)</option>
+            <option value="MATCHED">🎯 متطابقة (MATCHED)</option>
+            <option value="CV_READY">📄 المستندات جاهزة (CV_READY)</option>
+            <option value="READY_TO_APPLY">⚡ جاهزة للتقديم (READY_TO_APPLY)</option>
+            <option value="APPLIED_MANUALLY">✅ تم التقديم يدوياً (APPLIED_MANUALLY)</option>
+            <option value="REJECTED">❌ مستبعدة (REJECTED)</option>
+            <option value="EXPIRED">⌛ وظائف منتهية الصلاحية (EXPIRED)</option>
+          </select>
+
+          <!-- فلتر نسبة التوافق -->
+          <select id="jobScoreFilter" class="filter-select" onchange="loadJobsList()">
+            <option value="50" selected>🎯 وظائف متوافقة فقط (50% فما فوق)</option>
+            <option value="80">🚀 توافق فائق (80% فما فوق)</option>
+            <option value="65">🔹 توافق جيد (65% فما فوق)</option>
+            <option value="">🌐 عرض كل الوظائف</option>
+          </select>
+
+          <!-- فلتر نوع العمل -->
+          <select id="jobWorkTypeFilter" class="filter-select" onchange="loadJobsList()">
+            <option value="all">كل أنواع العمل (Remote / Hybrid / On-site)</option>
+            <option value="remote">🌐 عن بعد (Remote)</option>
+            <option value="hybrid">🔄 هجين (Hybrid)</option>
+            <option value="on-site">🏢 حضوري (On-site)</option>
+          </select>
+
+          <!-- فلتر المصدر -->
+          <select id="jobSourceFilter" class="filter-select" onchange="loadJobsList()">
+            <option value="all">كل المصادر (All Sources)</option>
+          </select>
+
+          <!-- خيار الترتيب -->
+          <select id="jobSortBy" class="filter-select sort-select" onchange="loadJobsList()">
+            <option value="match_score" selected>🏆 ترتيب: أعلى نسبة توافق</option>
+            <option value="newest">🕒 ترتيب: الأحدث نشراً</option>
+            <option value="salary">💰 ترتيب: أعلى راتب</option>
+            <option value="company">🏢 ترتيب: اسم الشركة</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- جدول الوظائف الاحترافي المدمج والواضح -->
+      <div class="table-container jobs-table-wrapper">
+        <table class="logs-table jobs-table">
+          <thead>
+            <tr>
+              <th style="min-width: 280px;">الوظيفة والشركة</th>
+              <th style="min-width: 170px;">العمل والراتب</th>
+              <th style="min-width: 120px; text-align: center;">نسبة التوافق</th>
+              <th style="min-width: 140px;">المصدر والحالة</th>
+              <th style="min-width: 250px; text-align: center;">الإجراءات والتقديم اليدوي</th>
+            </tr>
+          </thead>
+          <tbody id="jobsTableBody">
+            <tr><td colspan="5" class="text-center">جاري تحميل الوظائف المتوافقة...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- تبويب 2: إدارة مصادر الوظائف (Job Sources Management) -->
+    <!-- ======================================================== -->
+    <section id="sourcesView" class="view-section">
+      <div class="jobs-header-banner" style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(99, 102, 241, 0.15)); border-color: rgba(56, 189, 248, 0.3);">
+        <div class="jobs-header-info">
+          <h2>🌐 إدارة ومراقبة مصادر الوظائف المعتمدة</h2>
+          <p>يتم جلب الوظائف حصراً واستثنائياً من المصادر المكونة والمفعلة في هذا الجدول. لن يقوم النظام بجلب وظائف من أي موقع عشوائي غير مضاف ومفعل هنا.</p>
+        </div>
+        <div class="jobs-header-actions">
+          <button class="btn btn-primary" onclick="openAddSourceModal()">
+            <span class="btn-icon">➕</span>
+            <span>إضافة مصدر وظائف جديد</span>
+          </button>
+          <button class="btn btn-success" onclick="triggerFetchJobsNow()">
+            <span class="btn-icon">🔄</span>
+            <span>جلب الآن من المصادر المفعلة</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- جدول مصادر الوظائف -->
+      <div class="table-container sources-table-wrapper">
+        <table class="logs-table">
+          <thead>
+            <tr>
+              <th>اسم المصدر</th>
+              <th>رابط الموقع</th>
+              <th>النوع</th>
+              <th>نقطة نهاية الـ API</th>
+              <th>حالة التفعيل</th>
+              <th>آخر وقت جلب</th>
+              <th>إجمالي المجلوبة</th>
+              <th>الوظائف الصالحة</th>
+              <th>المكررة</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="sourcesTableBody">
+            <tr><td colspan="10" class="text-center">جاري تحميل مصادر الوظائف...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- تبويب 3: سجل التقديم اليدوي للوظائف (Manual Applications) -->
+    <!-- ======================================================== -->
+    <section id="appliedView" class="view-section">
+      <div class="jobs-header-banner" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(99, 102, 241, 0.15)); border-color: rgba(16, 185, 129, 0.3);">
+        <div class="jobs-header-info">
+          <h2>📤 سجل متابعة التقديمات اليدوية الموثقة</h2>
+          <p>سجل حصري للوظائف التي قمت بالتقديم عليها بنفسك يدوياً على مواقع التوظيف والشركات الأصلية وأكدت إرسالها.</p>
+        </div>
+        <div class="jobs-header-actions">
+          <button class="btn btn-primary" onclick="loadManualApplicationsList()" style="background: linear-gradient(135deg, #10b981, #059669); border:none;">
+            <span class="btn-icon">🔄</span>
+            <span>تحديث السجل</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- جدول التقديمات اليدوية -->
+      <div class="table-container applied-table-wrapper">
+        <table class="logs-table">
+          <thead>
+            <tr>
+              <th>الشركة</th>
+              <th>المسمى الوظيفي</th>
+              <th>الموقع / نوع العمل</th>
+              <th>تاريخ ووقت التقديم</th>
+              <th>المصدر</th>
+              <th>نسبة التوافق</th>
+              <th>المستندات المستخدمة</th>
+              <th>رابط الإعلان الأصلي</th>
+              <th>ملاحظات التقديم</th>
+            </tr>
+          </thead>
+          <tbody id="manualApplicationsTableBody">
+            <tr><td colspan="9" class="text-center">جاري تحميل سجل التقديمات اليدوية...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- تبويب 4: الملف المهني وتفضيلات المرشح (Candidate Profile) -->
+    <!-- ======================================================== -->
+    <section id="profileView" class="view-section">
+      <!-- رفع السيرة الذاتية وتأسيس الملف -->
+      <div class="profile-management-grid">
+        <div class="pm-card upload-card">
+          <div class="pm-card-header">
+            <h3>📄 رفع السيرة الذاتية الأساسية (Source of Truth)</h3>
+            <span class="pm-sub-tag">تحليل ذكي دون أي فبركة</span>
+          </div>
+          <p class="pm-desc">ارفع سيرتك الذاتية (PDF أو TXT). سيعتمد عليها النظام حصراً كمصدر وحيد وصادق 100% لكافة المهارات والخبرات والشهادات.</p>
+          
+          <form id="uploadCvForm" onsubmit="handleCvUpload(event)" class="upload-form">
+            <div class="file-drop-zone" id="fileDropZone" onclick="document.getElementById('cvFileInput').click()">
+              <input type="file" id="cvFileInput" accept=".pdf,.txt,.docx" style="display:none;" onchange="handleFileSelected(this)">
+              <div class="drop-zone-content">
+                <span class="drop-icon" id="dropZoneIcon">📁</span>
+                <span class="drop-text" id="dropZoneText">اسحب ملف الـ CV هنا أو اضغط للاختيار</span>
+                <span class="drop-hint">يدعم PDF و TXT (الحد الأقصى 15MB)</span>
+              </div>
+            </div>
+
+            <div class="upload-actions">
+              <button type="submit" id="btnUploadCv" class="btn btn-primary" disabled>
+                <span class="btn-icon">⚡</span>
+                <span id="uploadBtnText">تحليل واستخراج الملف المهني</span>
+              </button>
+              <a id="btnDownloadOriginalCv" href="/api/candidate/download-cv" target="_blank" class="btn btn-secondary" style="display:none;">
+                <span>📥 تحميل الـ CV الأصلي المرفوع</span>
+              </a>
+            </div>
+          </form>
+        </div>
+
+        <!-- تفضيلات التوظيف والحدود المالية -->
+        <div class="pm-card preferences-card">
+          <div class="pm-card-header">
+            <h3>⚙️ تفضيلات التوظيف والمطابقة</h3>
+            <span class="pm-sub-tag">المعايير المعتمدة</span>
+          </div>
+          
+          <form id="preferencesForm" onsubmit="handleSavePreferences(event)">
+            <div class="pref-field">
+              <label for="prefMinSalary">الراتب المستهدف شهرياً ($ USD):</label>
+              <div class="input-with-icon">
+                <span class="currency-icon">$</span>
+                <input type="number" id="prefMinSalary" min="500" step="100" value="2000" placeholder="2000" required>
+              </div>
+            </div>
+
+            <div class="pref-field">
+              <label>أنواع العمل المقبولة:</label>
+              <div class="checkbox-group">
+                <label class="custom-checkbox">
+                  <input type="checkbox" id="workTypeRemote" checked>
+                  <span>🌐 عن بعد (Remote)</span>
+                </label>
+                <label class="custom-checkbox">
+                  <input type="checkbox" id="workTypeOnsite" checked>
+                  <span>🏢 حضوري (On-site)</span>
+                </label>
+                <label class="custom-checkbox">
+                  <input type="checkbox" id="workTypeHybrid" checked>
+                  <span>🔄 هجين (Hybrid)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="pref-field">
+              <label for="prefLocation">الموقع وتفضيلات العمل عن بعد:</label>
+              <input type="text" id="prefLocation" value="جميع دول العالم للعمل عن بعد / Remote Worldwide">
+            </div>
+
+            <div class="pref-field">
+              <label for="prefTargetRole">المسميات المستهدفة:</label>
+              <input type="text" id="prefTargetRole" placeholder="Backend Developer, Full-Stack Developer, Node.js, Laravel">
+            </div>
+
+            <button type="submit" id="btnSavePreferences" class="btn btn-success">
+              <span>حفظ التفضيلات واعتماد الملف المهني ✅</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- عرض تفاصيل الملف المهني المستخرج للمرشح -->
+      <div id="candidateProfileDisplay" class="candidate-profile-container" style="display:none; margin-top: 1.5rem;">
+        <div class="profile-main-header">
+          <div class="profile-avatar">👨‍💻</div>
+          <div class="profile-headline-box">
+            <h3 id="profFullName" class="prof-name">اسم المرشح</h3>
+            <div id="profHeadline" class="prof-headline">المسمى الوظيفي الرئيسي</div>
+            <div class="prof-meta-tags">
+              <span id="profEmail" class="prof-tag">✉️ email@example.com</span>
+              <span id="profPhone" class="prof-tag">📞 +123456789</span>
+              <span id="profLocation" class="prof-tag">📍 Location</span>
+              <span id="profExperience" class="prof-tag">⏳ 0 سنوات خبرة</span>
+            </div>
+            <div id="profLinks" class="prof-links-list"></div>
+          </div>
+        </div>
+
+        <div class="profile-section-card">
+          <h4>📝 النبذة المهنية الحقيقية (Summary)</h4>
+          <p id="profSummary" class="profile-summary-text"></p>
+        </div>
+
+        <div class="profile-section-card">
+          <h4>🛠️ المهارات والتقنيات المستخرجة من الـ CV (حقيقية 100%)</h4>
+          <div id="profSkillsCategories" class="skills-categories-grid"></div>
+        </div>
+
+        <div class="profile-section-card">
+          <h4>💼 الخبرات المهنية السابقة الموثقة</h4>
+          <div id="profExperienceList" class="experience-timeline"></div>
+        </div>
+
+        <div class="profile-two-columns">
+          <div class="profile-section-card">
+            <h4>🎓 التعليم والشهادات</h4>
+            <div id="profEducationList"></div>
+            <div id="profCertificationsList" style="margin-top:12px;"></div>
+          </div>
+          <div class="profile-section-card">
+            <h4>🚀 المشاريع واللغات</h4>
+            <div id="profProjectsList"></div>
+            <div id="profLanguagesList" style="margin-top:12px;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- تبويب 5: صندوق الوارد والبريد (Gmail Inbox & Analysis) -->
+    <!-- ======================================================== -->
+    <section id="inboxView" class="view-section">
+      <div class="filters-bar">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="ابحث في الرسائل، العناوين، أو الشركات..." oninput="handleSearch()">
+        </div>
+
+        <div class="filters-group">
+          <select id="priorityFilter" class="filter-select" onchange="loadEmails()">
+            <option value="all">كل الأولويات</option>
+            <option value="عاجل">🚨 عاجل</option>
+            <option value="مهم">⭐ مهم</option>
+            <option value="عادي">🔹 عادي</option>
+            <option value="معلومات فقط">ℹ️ معلومات فقط</option>
+          </select>
+
+          <select id="companyFilter" class="filter-select" onchange="loadEmails()">
+            <option value="all">كل الشركات والجهات</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="logs-table">
+          <thead>
+            <tr>
+              <th>الأولوية</th>
+              <th>الشركة</th>
+              <th>الموضوع</th>
+              <th>ملخص الذكاء الاصطناعي</th>
+              <th>إجراء مطلوب؟</th>
+              <th>تاريخ الاستلام</th>
+              <th>التفاصيل</th>
+            </tr>
+          </thead>
+          <tbody id="emailsTableBody">
+            <tr><td colspan="7" class="text-center">جاري تحميل الرسائل...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- تبويب 6: السجل الزمني (History) -->
+    <!-- ======================================================== -->
+    <section id="historyView" class="view-section">
+      <div class="table-container">
+        <table class="logs-table">
+          <thead>
+            <tr>
+              <th>اليوم / التاريخ</th>
+              <th>إجمالي الرسائل</th>
+              <th>عدد الشركات</th>
+              <th>رسائل عاجلة</th>
+              <th>رسائل مهمة</th>
+              <th>عرض التفاصيل</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody">
+            <tr><td colspan="6" class="text-center">جاري تحميل السجل الزمني...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- تبويب 7: سجلات النظام (System Logs) -->
+    <!-- ======================================================== -->
+    <section id="logsView" class="view-section">
+      <div class="table-container">
+        <table class="logs-table">
+          <thead>
+            <tr>
+              <th>الوقت</th>
+              <th>المستوى</th>
+              <th>الرسالة</th>
+              <th>التفاصيل</th>
+            </tr>
+          </thead>
+          <tbody id="logsTableBody">
+            <tr><td colspan="4" class="text-center">جاري تحميل السجلات...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- ======================================================== -->
+  <!-- نافذة تفاصيل الوظيفة الشاملة باللغة العربية مع خيار الإنجليزية (Full Job Details Modal) -->
+  <!-- ======================================================== -->
+  <div id="jobModal" class="modal-overlay" onclick="closeJobModalOnOverlay(event)">
+    <div class="modal-content job-modal-content">
+      <div class="modal-header">
+        <div class="modal-header-top" style="justify-content: space-between; width: 100%;">
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <span id="modalJobSourceBadge" class="badge">المصدر</span>
+            <span id="modalJobWorkTypeBadge" class="badge">نوع العمل</span>
+            <span id="modalJobStatusBadge" class="badge badge-outline">الحالة</span>
+          </div>
+
+          <!-- زر التبديل بين العربية والإنجليزية -->
+          <div class="lang-switch-box">
+            <button class="lang-toggle-btn active" id="btnLangAr" onclick="switchJobModalLang('ar')">العربية (الافتراضي)</button>
+            <button class="lang-toggle-btn" id="btnLangEn" onclick="switchJobModalLang('en')">English</button>
+          </div>
+        </div>
+
+        <h2 id="modalJobTitle" class="modal-title">مسمى الوظيفة</h2>
+        <div class="modal-meta">
+          <div><span class="meta-label">🏢 الشركة:</span> <strong id="modalJobCompany"></strong></div>
+          <div><span class="meta-label">📍 الموقع:</span> <span id="modalJobLocation"></span></div>
+          <div><span class="meta-label">💰 الراتب المعلن:</span> <strong id="modalJobSalary" style="color:#34d399;"></strong></div>
+        </div>
+        <button class="modal-close-btn" onclick="closeJobModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- 1. ملخص الوظيفة بالذكاء الاصطناعي (AI Job Summary in Arabic) -->
+        <div class="detail-card ai-summary-card">
+          <h3 class="detail-card-title">🤖 ملخص الوظيفة (AI Job Summary)</h3>
+          <p id="modalJobAiSummary" class="ai-summary-text">جاري تحميل ملخص الوظيفة...</p>
+        </div>
+
+        <!-- 2. تحليل المتطلبات والتوافق المهني (Requirements & Match Analysis) -->
+        <div id="modalJobMatchBox" class="detail-card match-analysis-card">
+          <div class="match-card-header">
+            <div class="match-score-badge-large" id="modalJobMatchScoreBadge">
+              <span id="modalJobMatchScoreNum">0%</span>
+              <span class="match-score-label">نسبة التوافق</span>
+            </div>
+            <div class="match-summary-texts">
+              <h4 id="modalJobMatchHeadline">تحليل التوافق المهني الصادق بالذكاء الاصطناعي</h4>
+              <p id="modalJobMatchSummary" class="match-summary-p">لماذا تطابق هذه الوظيفة ملفك وسيرتك الذاتية الحقيقية</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="reMatchCurrentJob()" id="btnReMatchJob" style="font-size:0.8rem; padding:0.4rem 0.8rem;">
+              <span>إعادة التقييم ⚡</span>
+            </button>
+          </div>
+
+          <!-- تفاصيل المتطلبات ومطابقتها -->
+          <div class="req-analysis-grid">
+            <div class="req-analysis-box">
+              <h5>📌 متطلبات أساسية وإلزامية (Mandatory):</h5>
+              <ul id="modalJobReqMandatory" class="req-list"></ul>
+            </div>
+            <div class="req-analysis-box">
+              <h5>✨ متطلبات مفضلة وإضافية (Preferred):</h5>
+              <ul id="modalJobReqPreferred" class="req-list"></ul>
+            </div>
+          </div>
+
+          <!-- المهارات المتطابقة من CV مقابل المهارات غير المتوفرة -->
+          <div class="matched-skills-comparison">
+            <div class="skills-comp-box matched-box">
+              <h5>✅ المهارات الموجودة لدي في السيرة الذاتية:</h5>
+              <div id="modalJobMatchedSkills" class="skill-badges-box"></div>
+            </div>
+            <div class="skills-comp-box missing-box">
+              <h5>⚠️ المهارات غير الموجودة لدي حالياً (بدون فبركة):</h5>
+              <div id="modalJobMissingSkills" class="skill-badges-box"></div>
+            </div>
+          </div>
+
+          <!-- نقاط القوة ونقاط الضعف في المطابقة -->
+          <div class="strengths-weaknesses-grid">
+            <div class="sw-box strengths-box">
+              <h5>💪 نقاط القوة في المطابقة:</h5>
+              <ul id="modalJobStrengths" class="sw-list"></ul>
+            </div>
+            <div class="sw-box weaknesses-box">
+              <h5>🔍 نقاط الضعف / متطلبات تحتاج تدريباً:</h5>
+              <ul id="modalJobWeaknesses" class="sw-list"></ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. النظرة العامة للوظيفة (Job Overview) -->
+        <div class="detail-card">
+          <h3 class="detail-card-title">📋 النظرة العامة والبيانات الرسمية (Job Overview)</h3>
+          <div class="job-overview-grid">
+            <div class="overview-item">
+              <span class="ov-label">نوع العمل:</span>
+              <strong id="ovWorkType" class="ov-value">عن بعد (Remote)</strong>
+            </div>
+            <div class="overview-item">
+              <span class="ov-label">نوع التوظيف:</span>
+              <strong id="ovEmpType" class="ov-value">دوام كامل (Full-time)</strong>
+            </div>
+            <div class="overview-item">
+              <span class="ov-label">تاريخ النشر:</span>
+              <strong id="ovPublishedAt" class="ov-value">غير محدد</strong>
+            </div>
+            <div class="overview-item">
+              <span class="ov-label">الموعد النهائي للتقديم:</span>
+              <strong id="ovDeadline" class="ov-value">غير محدد</strong>
+            </div>
+            <div class="overview-item">
+              <span class="ov-label">متطلبات الخبرة:</span>
+              <strong id="ovExperience" class="ov-value">غير محدد</strong>
+            </div>
+            <div class="overview-item">
+              <span class="ov-label">متطلبات التعليم:</span>
+              <strong id="ovEducation" class="ov-value">غير محدد</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. المسؤوليات والمهام (Responsibilities) -->
+        <div class="detail-card">
+          <h3 class="detail-card-title">🛠️ المسؤوليات والمهام الوظيفية (Responsibilities)</h3>
+          <ul id="modalJobResponsibilities" class="responsibilities-list"></ul>
+        </div>
+
+        <!-- 5. المزايا والمكافآت (Benefits) -->
+        <div class="detail-card">
+          <h3 class="detail-card-title">🎁 المزايا وحزمة التعويضات (Benefits)</h3>
+          <ul id="modalJobBenefits" class="benefits-list"></ul>
+        </div>
+
+        <!-- 6. الوصف الوظيفي الكامل (Full Job Description) -->
+        <div class="detail-card">
+          <h3 class="detail-card-title" id="jobDescCardTitle">📄 الوصف الوظيفي الكامل</h3>
+          <div id="modalJobDescription" class="translation-text" style="white-space:pre-wrap; max-height:350px; overflow-y:auto;"></div>
+        </div>
+
+        <!-- 7. قسم السيرة الذاتية المخصصة وخطاب التقديم المجهز (Tailored CV & Cover Letter) -->
+        <div class="detail-card tailored-docs-card">
+          <div class="tailored-header">
+            <div>
+              <h3 class="detail-card-title">📄 تجهيز السيرة الذاتية وخطاب التقديم المخصص</h3>
+              <p class="tailored-subtext">تخصيص وإبراز المهارات الحقيقية المتوافقة مع هذا الدور بنظام ATS المعتمد بدون أي معلومات وهمية.</p>
+            </div>
+            <button id="btnGenerateTailoredCv" class="btn btn-primary" onclick="generateTailoredDocsForCurrentJob()">
+              <span id="tailorSpinner" class="btn-spinner" style="display:none;">⏳</span>
+              <span id="tailorBtnText">✨ تجهيز الـ CV و Cover Letter الآن</span>
+            </button>
+          </div>
+
+          <div id="tailoredDocsResultBox" style="display:none; margin-top:1.25rem;">
+            <div class="tailored-actions-bar">
+              <a id="downloadTailoredCvLink" href="#" target="_blank" class="btn btn-success">
+                <span>📥 تحميل الـ CV المخصص (PDF ATS)</span>
+              </a>
+              <a id="downloadCoverLetterPdfLink" href="#" target="_blank" class="btn btn-primary" style="background:linear-gradient(135deg, #0284c7, #0369a1); border:none;">
+                <span>📥 تحميل خطاب التقديم (PDF)</span>
+              </a>
+              <button class="btn btn-secondary btn-sm" onclick="copyActiveCoverLetter()">
+                <span>📋 نسخ خطاب التقديم</span>
+              </button>
+            </div>
+
+            <!-- تبويب خطاب التقديم بالعربي والإنجليزي مع إمكانية التعديل والنسخ -->
+            <div class="cover-letter-preview-box" style="margin-top:1rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+                <div class="cl-lang-tabs">
+                  <button class="cl-tab-btn active" id="btnClTabEn" onclick="switchClTab('en')">English Cover Letter</button>
+                  <button class="cl-tab-btn" id="btnClTabAr" onclick="switchClTab('ar')">خطاب التقديم بالعربية</button>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="saveEditedCoverLetter()" style="font-size:0.78rem; padding:0.3rem 0.75rem; border-color:#10b981; color:#34d399;">
+                  💾 حفظ التعديل
+                </button>
+              </div>
+              <textarea id="modalJobCoverLetterText" style="width:100%; min-height:180px; background:rgba(10, 15, 30, 0.75); color:#f8fafc; border:1px solid rgba(255, 255, 255, 0.15); border-radius:var(--radius-sm); padding:0.85rem; font-family:inherit; font-size:0.92rem; line-height:1.65; resize:vertical;"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- تذييل النافذة والإجراءات المباشرة -->
+      <div class="modal-footer" style="flex-wrap:wrap; justify-content:space-between; gap:0.75rem;">
+        <div id="modalAppliedStatusBanner" class="modal-applied-banner" style="display:none; width:100%;">
+          <span>✅ تم توثيق التقديم اليدوي لهذه الوظيفة بنجاح!</span>
+          <span id="modalAppliedDateText" style="font-size:0.85rem; color:#a7f3d0;"></span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+          <a id="modalJobApplyLink" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="background: linear-gradient(135deg, #0284c7, #2563eb); font-weight:800; border:none; box-shadow:0 3px 12px rgba(2,132,199,0.35);">
+            <span>🌐 فتح موقع الوظيفة الأصلي للتقديم ↗</span>
+          </a>
+          <button id="btnModalMarkApplied" class="btn btn-success" onclick="openMarkAppliedModalForCurrentJob()" style="font-weight:800;">
+            <span>✅ تأكيد التقديم يدوياً (Mark as Applied)</span>
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="setJobStatus('REJECTED')" title="استبعاد الوظيفة">
+            <span>❌ استبعاد</span>
+          </button>
+        </div>
+
+        <button class="btn btn-secondary" onclick="closeJobModal()">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- نافذة تأكيد التقديم اليدوي (Manual Application Modal) -->
+  <!-- ======================================================== -->
+  <div id="markAppliedModal" class="modal-overlay" onclick="closeMarkAppliedModalOnOverlay(event)">
+    <div class="modal-content" style="max-width: 580px;">
+      <div class="modal-header">
+        <h2 class="modal-title">✅ تأكيد التقديم اليدوي على الوظيفة</h2>
+        <p style="color:var(--text-muted); font-size:0.88rem; margin-top:0.25rem;">يرجى تأكيد إتمامك للتقديم يدوياً على موقع صاحب العمل الأصلي لتوثيق تاريخ التقديم والمستندات المستخدمة.</p>
+        <button class="modal-close-btn" onclick="closeMarkAppliedModal()">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+          <div>
+            <span style="color:var(--text-muted); font-size:0.85rem;">الشركة:</span>
+            <strong id="markAppCompany" style="display:block; color:#fff; font-size:1.05rem;"></strong>
+          </div>
+          <div>
+            <span style="color:var(--text-muted); font-size:0.85rem;">المسمى الوظيفي:</span>
+            <strong id="markAppTitle" style="display:block; color:#38bdf8;"></strong>
+          </div>
+          <div>
+            <span style="color:var(--text-muted); font-size:0.85rem;">رابط الإعلان الأصلي:</span>
+            <a id="markAppUrl" href="#" target="_blank" rel="noopener noreferrer" style="display:block; color:#a5b4fc; word-break:break-all; font-size:0.88rem; margin-top:0.25rem;"></a>
+          </div>
+          <div class="pref-field">
+            <label for="markAppNotes">ملاحظات إضافية عن التقديم (اختياري):</label>
+            <textarea id="markAppNotes" placeholder="مثال: تم إرسال الـ CV المخصص وتعبئة استمارة التقديم على موقع الشركة مباشرة..." style="width:100%; min-height:80px; background:rgba(0,0,0,0.5); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:var(--radius-sm); padding:0.65rem;"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content:space-between;">
+        <button class="btn btn-secondary" onclick="closeMarkAppliedModal()">إلغاء</button>
+        <button id="btnConfirmMarkApplied" class="btn btn-success" onclick="confirmMarkAppliedSubmit()" style="font-weight:800;">
+          <span>تأكيد وتسجيل التقديم اليدوي رسمياً 🎯</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- نافذة إضافة / تعديل مصدر وظائف (Add/Edit Source Modal) -->
+  <!-- ======================================================== -->
+  <div id="sourceModal" class="modal-overlay" onclick="closeSourceModalOnOverlay(event)">
+    <div class="modal-content" style="max-width: 550px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="sourceModalTitle">➕ إضافة مصدر وظائف جديد</h2>
+        <button class="modal-close-btn" onclick="closeSourceModal()">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <form id="sourceForm" onsubmit="handleSourceSubmit(event)" style="display:flex; flex-direction:column; gap:1rem;">
+          <input type="hidden" id="sourceEditId" value="">
+          <div class="pref-field">
+            <label for="sourceInputName">اسم المصدر (Source Name):</label>
+            <input type="text" id="sourceInputName" placeholder="مثال: Remotive, Arbeitnow, Custom Board" required>
+          </div>
+          <div class="pref-field">
+            <label for="sourceInputUrl">رابط الموقع الرئيسي (Website URL):</label>
+            <input type="url" id="sourceInputUrl" placeholder="https://example.com" required>
+          </div>
+          <div class="pref-field">
+            <label for="sourceInputType">نوع المصدر (Source Type):</label>
+            <select id="sourceInputType" class="filter-select" style="width:100%;">
+              <option value="api">واجهة برمجية رسمية (API Endpoint)</option>
+              <option value="scraper">موقع ويب / تغذية (Scraper / RSS)</option>
+            </select>
+          </div>
+          <div class="pref-field">
+            <label for="sourceInputEndpoint">نقطة نهاية الـ API (API Endpoint - اختياري):</label>
+            <input type="url" id="sourceInputEndpoint" placeholder="https://example.com/api/jobs">
+          </div>
+          <div class="pref-field">
+            <label class="custom-checkbox">
+              <input type="checkbox" id="sourceInputActive" checked>
+              <span>تفعيل هذا المصدر لجلب الوظائف منه فوراً</span>
+            </label>
+          </div>
+          <div class="modal-footer" style="padding:0; margin-top:0.75rem; justify-content:space-between;">
+            <button type="button" class="btn btn-secondary" onclick="closeSourceModal()">إلغاء</button>
+            <button type="submit" class="btn btn-primary" style="font-weight:800;">
+              <span id="sourceSubmitBtnText">حفظ المصدر</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- نافذة تفاصيل رسالة Gmail (Email Modal) -->
+  <div id="emailModal" class="modal-overlay" onclick="closeModalOnOverlay(event)">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-header-top">
+          <span id="modalPriorityBadge" class="badge">أولوية</span>
+          <span id="modalActionBadge" class="badge">إجراء</span>
+        </div>
+        <h2 id="modalSubject" class="modal-title">عنوان الرسالة</h2>
+        <div class="modal-meta">
+          <div><span class="meta-label">المرسل:</span> <span id="modalSender"></span></div>
+          <div><span class="meta-label">الجهة / الشركة:</span> <strong id="modalCompany"></strong></div>
+          <div><span class="meta-label">وقت الوصول:</span> <span id="modalDate"></span></div>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div id="modalActionBox" class="action-highlight-box">
+          <div class="action-box-title">⚡ الإجراء المطلوب منك:</div>
+          <div id="modalActionDetails" class="action-box-content"></div>
+        </div>
+
+        <div class="detail-card">
+          <h3 class="detail-card-title">🤖 ملخص الذكاء الاصطناعي</h3>
+          <p id="modalSummary" class="detail-summary-text"></p>
+        </div>
+
+        <div class="detail-card">
+          <h3 class="detail-card-title">🌐 الترجمة العربية لمحتوى الرسالة</h3>
+          <div id="modalTranslation" class="translation-text"></div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <a id="modalGmailLink" href="#" target="_blank" class="btn btn-primary">
+          <span>فتح الرسالة في بريد Gmail ↗</span>
+        </a>
+        <button class="btn btn-secondary" onclick="closeModal()">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=6.0"></script>
+</body>
+</html>
